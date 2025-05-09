@@ -8,6 +8,8 @@
 
 ### 🐛 Bug fixes
 
+- Prioritize static routes over dynamic routes within same group ([#36765](https://github.com/expo/expo/pull/36765) by [@marklawlor](https://github.com/marklawlor))
+
 ### 💡 Others
 
 ## 5.0.7 — 2025-05-13
@@ -18,6 +20,8 @@
 - Fix web url from updating during initial load with nested navigators ([#36690](https://github.com/expo/expo/pull/36690) by [@marklawlor](https://github.com/marklawlor))
 - Esacpe unsafe property characters when generating params in typed routes output ([#36824](https://github.com/expo/expo/pull/36824) by [@kitten](https://github.com/kitten))
 - Fix useLocalSearchParams returning "undefined" for deleted params ([#36811](https://github.com/expo/expo/pull/36811) by [@marklawlor](https://github.com/marklawlor))
+
+### 💡 Others
 
 ## 5.0.6 — 2025-05-06
 
