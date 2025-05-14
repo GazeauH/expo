@@ -13,7 +13,6 @@ const react_native_safe_area_context_1 = require("react-native-safe-area-context
 const Pressable_1 = require("./Pressable");
 const Route_1 = require("../Route");
 const router_store_1 = require("../global-state/router-store");
-const imperative_api_1 = require("../imperative-api");
 const Link_1 = require("../link/Link");
 const matchers_1 = require("../matchers");
 const statusbar_1 = require("../utils/statusbar");
@@ -98,17 +97,11 @@ function StandardSitemapItem({ route, segments, isInitial, level }) {
     const filename = react_1.default.useMemo(() => {
         const segments = route.contextKey.split('/');
         const routeSegmentsCount = route.route.split('/').length;
-        // Join the segment count in reverse order
         // This presents files without layout routes as children with all relevant segments.
         return segments.slice(-routeSegmentsCount).join('/');
     }, [route]);
     const info = isInitial ? 'Initial' : route.generated ? 'Virtual' : '';
-    return (<Link_1.Link accessibilityLabel={route.contextKey} href={href} onPress={() => {
-            if (react_native_1.Platform.OS !== 'web' && imperative_api_1.router.canGoBack()) {
-                // Ensure the modal pops
-                imperative_api_1.router.back();
-            }
-        }} asChild 
+    return (<Link_1.Link accessibilityLabel={route.contextKey} href={href} asChild 
     // Ensure we replace the history so you can't go back to this page.
     replace>
       <SitemapItemPressable leftIcon={<FileIcon />} rightIcon={<ForwardIcon />} filename={filename} level={level} info={info}/>

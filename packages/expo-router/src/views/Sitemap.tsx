@@ -18,7 +18,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Pressable, PressableProps } from './Pressable';
 import { RouteNode, sortRoutes } from '../Route';
 import { store } from '../global-state/router-store';
-import { router } from '../imperative-api';
 import { Link } from '../link/Link';
 import { matchDeepDynamicRouteName } from '../matchers';
 import { canOverrideStatusBarBehavior } from '../utils/statusbar';
