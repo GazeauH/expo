@@ -164,7 +164,6 @@ function StandardSitemapItem({ route, segments, isInitial, level }: Required<Sit
 
     const routeSegmentsCount = route.route.split('/').length;
 
-    // Join the segment count in reverse order
     // This presents files without layout routes as children with all relevant segments.
     return segments.slice(-routeSegmentsCount).join('/');
   }, [route]);
@@ -175,12 +174,6 @@ function StandardSitemapItem({ route, segments, isInitial, level }: Required<Sit
     <Link
       accessibilityLabel={route.contextKey}
       href={href}
-      onPress={() => {
-        if (Platform.OS !== 'web' && router.canGoBack()) {
-          // Ensure the modal pops
-          router.back();
-        }
-      }}
       asChild
       // Ensure we replace the history so you can't go back to this page.
       replace>
