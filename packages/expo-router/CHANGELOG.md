@@ -8,6 +8,8 @@
 
 ### 🐛 Bug fixes
 
+- Fix deep linking showing incorrect screen ([#36864](https://github.com/expo/expo/pull/36864) by [@marklawlor](https://github.com/marklawlor))
+
 ### 💡 Others
 
 ## 5.0.7 — 2025-05-13
