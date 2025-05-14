@@ -67,9 +67,26 @@ function FileSystemView() {
       <FileItem route={route}/>
     </react_native_1.View>));
 }
-function FileItem({ route, level = 0, parents = [], isInitial = false, }) {
-    const disabled = route.children.length > 0;
-    const segments = react_1.default.useMemo(() => [...parents, ...route.route.split('/')], [parents, route.route]);
+function FileItem({ route, level = 0, segments: parentSegments = [], isInitial = false, }) {
+    const isLayout = react_1.default.useMemo(() => route.children.length > 0 || route.contextKey.match(/_layout\.[jt]sx?$/), [route]);
+    const segments = react_1.default.useMemo(() => [...parentSegments, ...route.route.split('/')], [parentSegments, route.route]);
+    if (isLayout) {
+        return <LayoutFileItem route={route} segments={segments} isInitial={isInitial} level={level}/>;
+    }
+    return <StandardFileItem route={route} segments={segments} isInitial={isInitial} level={level}/>;
+}
+function LayoutFileItem({ route, segments, level }) {
+    const filename = react_1.default.useMemo(() => {
+        const segments = route.contextKey.split('/');
+        // join last two segments for layout routes
+        return segments[segments.length - 2] + '/' + segments[segments.length - 1];
+    }, [route]);
+    return (<>
+      <FileItemPressable style={{ opacity: 0.4 }} leftIcon={<PkgIcon />} filename={filename} level={level} info={route.generated ? 'Virtual' : ''}/>
+      {route.children.map((child) => (<FileItem key={child.contextKey} route={child} isInitial={route.initialRouteName === child.route} segments={segments} level={level + (route.generated ? 0 : 1)}/>))}
+    </>);
+}
+function StandardFileItem({ route, segments, isInitial, level }) {
     const href = react_1.default.useMemo(() => {
         return ('/' +
             segments
@@ -86,49 +103,45 @@ function FileItem({ route, level = 0, parents = [], isInitial = false, }) {
     }, [segments, route.route]);
     const filename = react_1.default.useMemo(() => {
         const segments = route.contextKey.split('/');
-        // join last two segments for layout routes
-        if (route.contextKey.match(/_layout\.[jt]sx?$/)) {
-            return segments[segments.length - 2] + '/' + segments[segments.length - 1];
-        }
         const routeSegmentsCount = route.route.split('/').length;
         // Join the segment count in reverse order
         // This presents files without layout routes as children with all relevant segments.
         return segments.slice(-routeSegmentsCount).join('/');
     }, [route]);
     const info = isInitial ? 'Initial' : route.generated ? 'Virtual' : '';
-    return (<>
-      {!route.internal && (<Link_1.Link accessibilityLabel={route.contextKey} href={href} onPress={() => {
-                if (react_native_1.Platform.OS !== 'web' && imperative_api_1.router.canGoBack()) {
-                    // Ensure the modal pops
-                    imperative_api_1.router.back();
-                }
-            }} disabled={disabled} asChild 
-        // Ensure we replace the history so you can't go back to this page.
-        replace>
-          <Pressable_1.Pressable>
-            {({ pressed, hovered }) => (<react_native_1.View testID="sitemap-item" style={[
-                    styles.itemPressable,
-                    {
-                        paddingLeft: INDENT + level * INDENT,
-                        backgroundColor: hovered ? '#202425' : 'transparent',
-                    },
-                    pressed && { backgroundColor: '#26292b' },
-                    disabled && { opacity: 0.4 },
-                ]}>
-                <react_native_1.View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  {route.children.length ? <PkgIcon /> : <FileIcon />}
-                  <react_native_1.Text style={styles.filename}>{filename}</react_native_1.Text>
-                </react_native_1.View>
+    return (<Link_1.Link accessibilityLabel={route.contextKey} href={href} onPress={() => {
+            if (react_native_1.Platform.OS !== 'web' && imperative_api_1.router.canGoBack()) {
+                // Ensure the modal pops
+                imperative_api_1.router.back();
+            }
+        }} asChild 
+    // Ensure we replace the history so you can't go back to this page.
+    replace>
+      <FileItemPressable leftIcon={<FileIcon />} rightIcon={<ForwardIcon />} filename={filename} level={level} info={info}/>
+    </Link_1.Link>);
+}
+function FileItemPressable({ style, leftIcon, rightIcon, filename, level, info, ...pressableProps }) {
+    return (<Pressable_1.Pressable {...pressableProps}>
+      {({ pressed, hovered }) => (<react_native_1.View testID="sitemap-item" style={[
+                styles.itemPressable,
+                {
+                    paddingLeft: INDENT + level * INDENT,
+                    backgroundColor: hovered ? '#202425' : 'transparent',
+                },
+                pressed && { backgroundColor: '#26292b' },
+                style,
+            ]}>
+          <react_native_1.View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            {leftIcon}
+            <react_native_1.Text style={styles.filename}>{filename}</react_native_1.Text>
+          </react_native_1.View>
 
-                <react_native_1.View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  {!!info && (<react_native_1.Text style={[styles.virtual, !disabled && { marginRight: 8 }]}>{info}</react_native_1.Text>)}
-                  {!disabled && <ForwardIcon />}
-                </react_native_1.View>
-              </react_native_1.View>)}
-          </Pressable_1.Pressable>
-        </Link_1.Link>)}
-      {route.children.map((child) => (<FileItem key={child.contextKey} route={child} isInitial={route.initialRouteName === child.route} parents={segments} level={level + (route.generated ? 0 : 1)}/>))}
-    </>);
+          <react_native_1.View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            {!!info && <react_native_1.Text style={[styles.virtual, { marginRight: 8 }]}>{info}</react_native_1.Text>}
+            {rightIcon}
+          </react_native_1.View>
+        </react_native_1.View>)}
+    </Pressable_1.Pressable>);
 }
 function FileIcon() {
     return <react_native_1.Image style={styles.image} source={require('expo-router/assets/file.png')}/>;

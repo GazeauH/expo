@@ -3,10 +3,19 @@
 
 import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import React from 'react';
-import { Image, StyleSheet, Text, View, ScrollView, Platform, StatusBar } from 'react-native';
+import {
+  Image,
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
+  Platform,
+  StatusBar,
+  ViewStyle,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Pressable } from './Pressable';
+import { Pressable, PressableProps } from './Pressable';
 import { RouteNode, sortRoutes } from '../Route';
 import { store } from '../global-state/router-store';
 import { router } from '../imperative-api';
@@ -74,24 +83,65 @@ function FileSystemView() {
   ));
 }
 
+interface FileItemProps {
+  route: RouteNode;
+  level?: number;
+  segments?: string[];
+  isInitial?: boolean;
+}
+
 function FileItem({
   route,
   level = 0,
-  parents = [],
+  segments: parentSegments = [],
   isInitial = false,
-}: {
-  route: RouteNode;
-  level?: number;
-  parents?: string[];
-  isInitial?: boolean;
-}) {
-  const disabled = route.children.length > 0;
-
-  const segments = React.useMemo(
-    () => [...parents, ...route.route.split('/')],
-    [parents, route.route]
+}: FileItemProps) {
+  const isLayout = React.useMemo(
+    () => route.children.length > 0 || route.contextKey.match(/_layout\.[jt]sx?$/),
+    [route]
   );
 
+  const segments = React.useMemo(
+    () => [...parentSegments, ...route.route.split('/')],
+    [parentSegments, route.route]
+  );
+
+  if (isLayout) {
+    return <LayoutFileItem route={route} segments={segments} isInitial={isInitial} level={level} />;
+  }
+  return <StandardFileItem route={route} segments={segments} isInitial={isInitial} level={level} />;
+}
+
+function LayoutFileItem({ route, segments, level }: Required<FileItemProps>) {
+  const filename = React.useMemo(() => {
+    const segments = route.contextKey.split('/');
+    // join last two segments for layout routes
+    return segments[segments.length - 2] + '/' + segments[segments.length - 1];
+  }, [route]);
+
+  return (
+    <>
+      <FileItemPressable
+        style={{ opacity: 0.4 }}
+        leftIcon={<PkgIcon />}
+        filename={filename}
+        level={level}
+        info={route.generated ? 'Virtual' : ''}
+      />
+      {route.children.map((child) => (
+        <FileItem
+          key={child.contextKey}
+          route={child}
+          isInitial={route.initialRouteName === child.route}
+          segments={segments}
+          level={level + (route.generated ? 0 : 1)}
+        />
+      ))}
+    </>
+  );
+}
+
+function StandardFileItem({ route, segments, isInitial, level }: Required<FileItemProps>) {
   const href = React.useMemo(() => {
     return (
       '/' +
@@ -111,10 +161,6 @@ function FileItem({
 
   const filename = React.useMemo(() => {
     const segments = route.contextKey.split('/');
-    // join last two segments for layout routes
-    if (route.contextKey.match(/_layout\.[jt]sx?$/)) {
-      return segments[segments.length - 2] + '/' + segments[segments.length - 1];
-    }
 
     const routeSegmentsCount = route.route.split('/').length;
 
@@ -126,60 +172,71 @@ function FileItem({
   const info = isInitial ? 'Initial' : route.generated ? 'Virtual' : '';
 
   return (
-    <>
-      {!route.internal && (
-        <Link
-          accessibilityLabel={route.contextKey}
-          href={href}
-          onPress={() => {
-            if (Platform.OS !== 'web' && router.canGoBack()) {
-              // Ensure the modal pops
-              router.back();
-            }
-          }}
-          disabled={disabled}
-          asChild
-          // Ensure we replace the history so you can't go back to this page.
-          replace>
-          <Pressable>
-            {({ pressed, hovered }) => (
-              <View
-                testID="sitemap-item"
-                style={[
-                  styles.itemPressable,
-                  {
-                    paddingLeft: INDENT + level * INDENT,
-                    backgroundColor: hovered ? '#202425' : 'transparent',
-                  },
-                  pressed && { backgroundColor: '#26292b' },
-                  disabled && { opacity: 0.4 },
-                ]}>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  {route.children.length ? <PkgIcon /> : <FileIcon />}
-                  <Text style={styles.filename}>{filename}</Text>
-                </View>
+    <Link
+      accessibilityLabel={route.contextKey}
+      href={href}
+      onPress={() => {
+        if (Platform.OS !== 'web' && router.canGoBack()) {
+          // Ensure the modal pops
+          router.back();
+        }
+      }}
+      asChild
+      // Ensure we replace the history so you can't go back to this page.
+      replace>
+      <FileItemPressable
+        leftIcon={<FileIcon />}
+        rightIcon={<ForwardIcon />}
+        filename={filename}
+        level={level}
+        info={info}
+      />
+    </Link>
+  );
+}
 
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  {!!info && (
-                    <Text style={[styles.virtual, !disabled && { marginRight: 8 }]}>{info}</Text>
-                  )}
-                  {!disabled && <ForwardIcon />}
-                </View>
-              </View>
-            )}
-          </Pressable>
-        </Link>
+function FileItemPressable({
+  style,
+  leftIcon,
+  rightIcon,
+  filename,
+  level,
+  info,
+  ...pressableProps
+}: {
+  style?: ViewStyle;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
+  filename: string;
+  level: number;
+  info?: string;
+} & Omit<PressableProps, 'style' | 'children'>) {
+  return (
+    <Pressable {...pressableProps}>
+      {({ pressed, hovered }) => (
+        <View
+          testID="sitemap-item"
+          style={[
+            styles.itemPressable,
+            {
+              paddingLeft: INDENT + level * INDENT,
+              backgroundColor: hovered ? '#202425' : 'transparent',
+            },
+            pressed && { backgroundColor: '#26292b' },
+            style,
+          ]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            {leftIcon}
+            <Text style={styles.filename}>{filename}</Text>
+          </View>
+
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            {!!info && <Text style={[styles.virtual, { marginRight: 8 }]}>{info}</Text>}
+            {rightIcon}
+          </View>
+        </View>
       )}
-      {route.children.map((child) => (
-        <FileItem
-          key={child.contextKey}
-          route={child}
-          isInitial={route.initialRouteName === child.route}
-          parents={segments}
-          level={level + (route.generated ? 0 : 1)}
-        />
-      ))}
-    </>
+    </Pressable>
   );
 }
 
