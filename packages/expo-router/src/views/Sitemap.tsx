@@ -71,7 +71,7 @@ export function Sitemap() {
       <ScrollView contentContainerStyle={styles.scroll}>
         {children.map((route) => (
           <View testID="sitemap-item-container" key={route.contextKey} style={styles.itemContainer}>
-            <FileItem route={route} />
+            <SitemapItem route={route} />
           </View>
         ))}
       </ScrollView>
@@ -79,19 +79,19 @@ export function Sitemap() {
   );
 }
 
-interface FileItemProps {
+interface SitemapItemProps {
   route: RouteNode;
   level?: number;
   segments?: string[];
   isInitial?: boolean;
 }
 
-function FileItem({
+function SitemapItem({
   route,
   level = 0,
   segments: parentSegments = [],
   isInitial = false,
-}: FileItemProps) {
+}: SitemapItemProps) {
   const isLayout = React.useMemo(
     () => route.children.length > 0 || route.contextKey.match(/_layout\.[jt]sx?$/),
     [route]
@@ -103,12 +103,16 @@ function FileItem({
   );
 
   if (isLayout) {
-    return <LayoutFileItem route={route} segments={segments} isInitial={isInitial} level={level} />;
+    return (
+      <LayoutSitemapItem route={route} segments={segments} isInitial={isInitial} level={level} />
+    );
   }
-  return <StandardFileItem route={route} segments={segments} isInitial={isInitial} level={level} />;
+  return (
+    <StandardSitemapItem route={route} segments={segments} isInitial={isInitial} level={level} />
+  );
 }
 
-function LayoutFileItem({ route, segments, level }: Required<FileItemProps>) {
+function LayoutSitemapItem({ route, segments, level }: Required<SitemapItemProps>) {
   const filename = React.useMemo(() => {
     const segments = route.contextKey.split('/');
     // join last two segments for layout routes
@@ -117,7 +121,7 @@ function LayoutFileItem({ route, segments, level }: Required<FileItemProps>) {
 
   return (
     <>
-      <FileItemPressable
+      <SitemapItemPressable
         style={{ opacity: 0.4 }}
         leftIcon={<PkgIcon />}
         filename={filename}
@@ -125,7 +129,7 @@ function LayoutFileItem({ route, segments, level }: Required<FileItemProps>) {
         info={route.generated ? 'Virtual' : ''}
       />
       {route.children.map((child) => (
-        <FileItem
+        <SitemapItem
           key={child.contextKey}
           route={child}
           isInitial={route.initialRouteName === child.route}
@@ -137,7 +141,7 @@ function LayoutFileItem({ route, segments, level }: Required<FileItemProps>) {
   );
 }
 
-function StandardFileItem({ route, segments, isInitial, level }: Required<FileItemProps>) {
+function StandardSitemapItem({ route, segments, isInitial, level }: Required<SitemapItemProps>) {
   const href = React.useMemo(() => {
     return (
       '/' +
@@ -180,7 +184,7 @@ function StandardFileItem({ route, segments, isInitial, level }: Required<FileIt
       asChild
       // Ensure we replace the history so you can't go back to this page.
       replace>
-      <FileItemPressable
+      <SitemapItemPressable
         leftIcon={<FileIcon />}
         rightIcon={<ForwardIcon />}
         filename={filename}
@@ -191,7 +195,7 @@ function StandardFileItem({ route, segments, isInitial, level }: Required<FileIt
   );
 }
 
-function FileItemPressable({
+function SitemapItemPressable({
   style,
   leftIcon,
   rightIcon,

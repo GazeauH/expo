@@ -51,42 +51,36 @@ function getNavOptions() {
     };
 }
 function Sitemap() {
+    const children = react_1.default.useMemo(() => router_store_1.store.routeNode?.children.filter(({ internal }) => !internal).sort(Route_1.sortRoutes) ?? [], [router_store_1.store.routeNode]);
     return (<react_native_1.View style={styles.container}>
       {statusbar_1.canOverrideStatusBarBehavior && <react_native_1.StatusBar barStyle="light-content"/>}
       <react_native_1.ScrollView contentContainerStyle={styles.scroll}>
-        <FileSystemView />
+        {children.map((route) => (<react_native_1.View testID="sitemap-item-container" key={route.contextKey} style={styles.itemContainer}>
+            <SitemapItem route={route}/>
+          </react_native_1.View>))}
       </react_native_1.ScrollView>
     </react_native_1.View>);
 }
-function FileSystemView() {
-    // This shouldn't occur, as the user should be on the tutorial screen
-    if (!router_store_1.store.routeNode)
-        return null;
-    const children = router_store_1.store.routeNode.children.filter(({ internal }) => !internal).sort(Route_1.sortRoutes);
-    return children.map((route) => (<react_native_1.View testID="sitemap-item-container" key={route.contextKey} style={styles.itemContainer}>
-      <FileItem route={route}/>
-    </react_native_1.View>));
-}
-function FileItem({ route, level = 0, segments: parentSegments = [], isInitial = false, }) {
+function SitemapItem({ route, level = 0, segments: parentSegments = [], isInitial = false, }) {
     const isLayout = react_1.default.useMemo(() => route.children.length > 0 || route.contextKey.match(/_layout\.[jt]sx?$/), [route]);
     const segments = react_1.default.useMemo(() => [...parentSegments, ...route.route.split('/')], [parentSegments, route.route]);
     if (isLayout) {
-        return <LayoutFileItem route={route} segments={segments} isInitial={isInitial} level={level}/>;
+        return (<LayoutSitemapItem route={route} segments={segments} isInitial={isInitial} level={level}/>);
     }
-    return <StandardFileItem route={route} segments={segments} isInitial={isInitial} level={level}/>;
+    return (<StandardSitemapItem route={route} segments={segments} isInitial={isInitial} level={level}/>);
 }
-function LayoutFileItem({ route, segments, level }) {
+function LayoutSitemapItem({ route, segments, level }) {
     const filename = react_1.default.useMemo(() => {
         const segments = route.contextKey.split('/');
         // join last two segments for layout routes
         return segments[segments.length - 2] + '/' + segments[segments.length - 1];
     }, [route]);
     return (<>
-      <FileItemPressable style={{ opacity: 0.4 }} leftIcon={<PkgIcon />} filename={filename} level={level} info={route.generated ? 'Virtual' : ''}/>
-      {route.children.map((child) => (<FileItem key={child.contextKey} route={child} isInitial={route.initialRouteName === child.route} segments={segments} level={level + (route.generated ? 0 : 1)}/>))}
+      <SitemapItemPressable style={{ opacity: 0.4 }} leftIcon={<PkgIcon />} filename={filename} level={level} info={route.generated ? 'Virtual' : ''}/>
+      {route.children.map((child) => (<SitemapItem key={child.contextKey} route={child} isInitial={route.initialRouteName === child.route} segments={segments} level={level + (route.generated ? 0 : 1)}/>))}
     </>);
 }
-function StandardFileItem({ route, segments, isInitial, level }) {
+function StandardSitemapItem({ route, segments, isInitial, level }) {
     const href = react_1.default.useMemo(() => {
         return ('/' +
             segments
@@ -117,10 +111,10 @@ function StandardFileItem({ route, segments, isInitial, level }) {
         }} asChild 
     // Ensure we replace the history so you can't go back to this page.
     replace>
-      <FileItemPressable leftIcon={<FileIcon />} rightIcon={<ForwardIcon />} filename={filename} level={level} info={info}/>
+      <SitemapItemPressable leftIcon={<FileIcon />} rightIcon={<ForwardIcon />} filename={filename} level={level} info={info}/>
     </Link_1.Link>);
 }
-function FileItemPressable({ style, leftIcon, rightIcon, filename, level, info, ...pressableProps }) {
+function SitemapItemPressable({ style, leftIcon, rightIcon, filename, level, info, ...pressableProps }) {
     return (<Pressable_1.Pressable {...pressableProps}>
       {({ pressed, hovered }) => (<react_native_1.View testID="sitemap-item" style={[
                 styles.itemPressable,
