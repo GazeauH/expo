@@ -74,9 +74,11 @@ function LayoutSitemapItem({ route, segments, level }) {
         // join last two segments for layout routes
         return segments[segments.length - 2] + '/' + segments[segments.length - 1];
     }, [route]);
+    const [isCollapsed, setIsCollapsed] = react_1.default.useState(true);
     return (<>
-      <SitemapItemPressable style={{ opacity: 0.4 }} leftIcon={<PkgIcon />} filename={filename} level={level} info={route.generated ? 'Virtual' : ''}/>
-      {route.children.map((child) => (<SitemapItem key={child.contextKey} route={child} isInitial={route.initialRouteName === child.route} segments={segments} level={level + (route.generated ? 0 : 1)}/>))}
+      <SitemapItemPressable style={{ opacity: 0.4 }} leftIcon={<PkgIcon />} rightIcon={<ArrowIcon rotation={isCollapsed ? 0 : 180}/>} filename={filename} level={level} info={route.generated ? 'Virtual' : ''} onPress={() => setIsCollapsed((prev) => !prev)}/>
+      {!isCollapsed &&
+            route.children.map((child) => (<SitemapItem key={child.contextKey} route={child} isInitial={route.initialRouteName === child.route} segments={segments} level={level + (route.generated ? 0 : 1)}/>))}
     </>);
 }
 function StandardSitemapItem({ route, segments, isInitial, level }) {
@@ -141,6 +143,14 @@ function ForwardIcon() {
 }
 function SitemapIcon() {
     return <react_native_1.Image style={styles.image} source={require('expo-router/assets/sitemap.png')}/>;
+}
+function ArrowIcon({ rotation = 0 }) {
+    return (<react_native_1.Image style={[
+            styles.image,
+            {
+                transform: [{ rotate: `${rotation}deg` }],
+            },
+        ]} source={require('expo-router/assets/arrow_down.png')}/>);
 }
 const styles = react_native_1.StyleSheet.create({
     container: {
