@@ -61,26 +61,22 @@ export function getNavOptions(): NativeStackNavigationOptions {
 }
 
 export function Sitemap() {
+  const children = React.useMemo(
+    () => store.routeNode?.children.filter(({ internal }) => !internal).sort(sortRoutes) ?? [],
+    [store.routeNode]
+  );
   return (
     <View style={styles.container}>
       {canOverrideStatusBarBehavior && <StatusBar barStyle="light-content" />}
       <ScrollView contentContainerStyle={styles.scroll}>
-        <FileSystemView />
+        {children.map((route) => (
+          <View testID="sitemap-item-container" key={route.contextKey} style={styles.itemContainer}>
+            <FileItem route={route} />
+          </View>
+        ))}
       </ScrollView>
     </View>
   );
-}
-
-function FileSystemView() {
-  // This shouldn't occur, as the user should be on the tutorial screen
-  if (!store.routeNode) return null;
-  const children = store.routeNode.children.filter(({ internal }) => !internal).sort(sortRoutes);
-
-  return children.map((route) => (
-    <View testID="sitemap-item-container" key={route.contextKey} style={styles.itemContainer}>
-      <FileItem route={route} />
-    </View>
-  ));
 }
 
 interface FileItemProps {
